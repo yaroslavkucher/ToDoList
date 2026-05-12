@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using ToDo.Application.Common.Interfaces;
 using ToDo.Domain.Entities;
 
@@ -15,6 +15,8 @@ public class CreateTaskCommandHandler : IRequestHandler<CreateTaskCommand, Guid>
 
     public async Task<Guid> Handle(CreateTaskCommand request, CancellationToken cancellationToken)
     {
+        TaskValidation.ValidateDetails(request.Title, request.Description, request.Deadline);
+
         var entity = new TaskItem(request.Title, request.Description, request.Deadline);
 
         _context.Tasks.Add(entity);

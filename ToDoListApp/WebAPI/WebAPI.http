@@ -1,6 +1,51 @@
 @WebAPI_HostAddress = http://localhost:5127
+@TaskId = 00000000-0000-0000-0000-000000000000
 
-GET {{WebAPI_HostAddress}}/weatherforecast/
+POST {{WebAPI_HostAddress}}/api/tasks/
+Content-Type: application/json
+Accept: application/json
+
+{
+  "title": "Prepare backend cleanup",
+  "description": "Verify ToDo API after removing template endpoints",
+  "deadline": "2026-05-20T12:00:00Z"
+}
+
+###
+
+GET {{WebAPI_HostAddress}}/api/tasks/
+Accept: application/json
+
+###
+
+GET {{WebAPI_HostAddress}}/api/tasks/{{TaskId}}
+Accept: application/json
+
+###
+
+PUT {{WebAPI_HostAddress}}/api/tasks/{{TaskId}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "title": "Prepare backend CRUD",
+  "description": "Update task details",
+  "deadline": "2026-05-21T12:00:00Z"
+}
+
+###
+
+PATCH {{WebAPI_HostAddress}}/api/tasks/{{TaskId}}/status
+Content-Type: application/json
+Accept: application/json
+
+{
+  "status": "InProgress"
+}
+
+###
+
+DELETE {{WebAPI_HostAddress}}/api/tasks/{{TaskId}}
 Accept: application/json
 
 ###
