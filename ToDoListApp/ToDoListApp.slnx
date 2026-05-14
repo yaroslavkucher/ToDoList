@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="docker-compose.yml" />
+  </Folder>
   <Project Path="Application/Todo.Application.csproj" />
   <Project Path="Backend.Tests/Todo.Backend.Tests.csproj" />
   <Project Path="Domain/Todo.Domain.csproj" />
