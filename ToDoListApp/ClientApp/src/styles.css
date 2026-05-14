@@ -480,12 +480,96 @@ input.invalid {
   gap: 12px;
 }
 
-.task-title-line select {
-  width: 142px;
-  min-height: 36px;
-  border-radius: 12px;
-  font-size: 0.82rem;
+.custom-select {
+    position: relative;
+    width: 142px;
 }
+
+.custom-select-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 36px;
+    padding: 0 12px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: oklch(0.99 0.006 300);
+    color: var(--ink);
+    font-size: 0.82rem;
+    text-align: left;
+    transition: border-color 180ms ease-out, box-shadow 180ms ease-out;
+}
+
+    .custom-select-trigger:focus,
+    .custom-select-trigger[aria-expanded="true"] {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px oklch(0.73 0.13 305 / 0.18);
+        outline: none;
+    }
+
+    .custom-select-trigger .chevron {
+        color: var(--muted);
+        transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+        .custom-select-trigger .chevron.open {
+            transform: rotate(180deg);
+            color: var(--primary);
+        }
+
+.custom-select-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    width: 100%;
+    min-width: 150px;
+    margin: 0;
+    padding: 6px;
+    list-style: none;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: 0 12px 32px oklch(0.46 0.08 300 / 0.15);
+    z-index: 50;
+    animation: popIn 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transform-origin: top;
+}
+
+@keyframes popIn {
+    from {
+        opacity: 0;
+        transform: scaleY(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scaleY(1);
+    }
+}
+
+.custom-select-option {
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ink);
+    font-size: 0.82rem;
+    font-weight: 500;
+    text-align: left;
+    transition: background 120ms ease-out, color 120ms ease-out;
+}
+
+    .custom-select-option:hover {
+        background: var(--surface-muted);
+    }
+
+    .custom-select-option.selected {
+        background: var(--primary-soft);
+        color: var(--primary-deep);
+        font-weight: 700;
+    }
 
 .task-body p {
   max-width: 68ch;
@@ -614,7 +698,7 @@ input.invalid {
     grid-column: 2;
   }
 
-  .task-title-line select {
-    width: 100%;
+  .custom-select {
+      width: 100%;
   }
 }

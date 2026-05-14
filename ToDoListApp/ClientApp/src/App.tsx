@@ -1,5 +1,5 @@
-import { CalendarDays, CheckCircle2, Clock3, Edit3, Plus, RefreshCw, Trash2 } from "lucide-react";
-import { type CSSProperties, type FormEvent, useEffect, useMemo, useState } from "react";
+import { CalendarDays, CheckCircle2, ChevronDown, Clock3, Edit3, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { type CSSProperties, type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "./app/hooks";
 import {
   changeTaskStatus,
@@ -272,20 +272,14 @@ function TaskRow({
         {task.status === "Done" ? <CheckCircle2 size={18} /> : <Clock3 size={18} />}
       </div>
       <div className="task-body">
-        <div className="task-title-line">
-          <h3>{task.title}</h3>
-          <select
-            value={task.status}
-            onChange={(event) => onStatusChange(task.id, event.target.value as TaskStatus)}
-            aria-label={`Change status for ${task.title}`}
-          >
-            {taskStatuses.map((status) => (
-              <option key={status} value={status}>
-                {statusLabels[status]}
-              </option>
-            ))}
-          </select>
-        </div>
+              <div className="task-title-line">
+                  <h3>{task.title}</h3>
+                  <TaskStatusSelect
+                      value={task.status}
+                      onChange={(newStatus) => onStatusChange(task.id, newStatus)}
+                      title={task.title}
+                  />
+              </div>
         {task.description ? <p>{task.description}</p> : null}
         <span className="deadline">
           <CalendarDays size={15} />
@@ -312,6 +306,63 @@ function TaskSkeleton() {
       <div className="skeleton-row" />
     </>
   );
+}
+
+function TaskStatusSelect({
+    value,
+    onChange,
+    title
+}: {
+    value: TaskStatus;
+    onChange: (status: TaskStatus) => void;
+    title: string;
+}) {
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    return (
+        <div className="custom-select" ref={dropdownRef}>
+            <button
+                type="button"
+                className="custom-select-trigger"
+                onClick={() => setIsOpen(!isOpen)}
+                aria-label={`Change status for ${title}`}
+                aria-expanded={isOpen}
+            >
+                <span>{statusLabels[value]}</span>
+                <ChevronDown size={16} className={`chevron ${isOpen ? "open" : ""}`} />
+            </button>
+
+            {isOpen && (
+                <ul className="custom-select-menu">
+                    {taskStatuses.map((status) => (
+                        <li key={status}>
+                            <button
+                                type="button"
+                                className={`custom-select-option ${status === value ? "selected" : ""}`}
+                                onClick={() => {
+                                    onChange(status);
+                                    setIsOpen(false);
+                                }}
+                            >
+                                {statusLabels[status]}
+                            </button>
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </div>
+    );
 }
 
 function EmptyState() {
