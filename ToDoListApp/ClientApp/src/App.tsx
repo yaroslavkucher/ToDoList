@@ -33,11 +33,17 @@ export default function App() {
   }, [dispatch]);
 
   const visibleTasks = useMemo(() => {
-    if (activeFilter === "All") {
-      return items;
+    let filtered = items;
+    
+    if (activeFilter !== "All") {
+      filtered = items.filter((task) => task.status === activeFilter);
     }
 
-    return items.filter((task) => task.status === activeFilter);
+    return [...filtered].sort((a, b) => {
+      if (!a.deadline) return 1;
+      if (!b.deadline) return -1;
+      return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+    });
   }, [activeFilter, items]);
 
   const totals = useMemo(() => {
@@ -52,10 +58,10 @@ export default function App() {
     event.preventDefault();
     const validationErrors = validateForm(form);
 
-    if (validationErrors.title) {
-      setClientFieldErrors(validationErrors);
-      return;
-    }
+      if (Object.keys(validationErrors).length > 0) {
+          setClientFieldErrors(validationErrors);
+          return;
+      }
 
     const details = normalizeForm(form);
 
@@ -93,15 +99,16 @@ export default function App() {
   }
 
   const titleError = clientFieldErrors.title ?? fieldErrors.title;
-  const descriptionError = fieldErrors.description;
+    const descriptionError = fieldErrors.description;
+    const deadlineError = clientFieldErrors.deadline ?? (fieldErrors as Record<string, string>).deadline;
 
   return (
     <main className="app-shell">
       <section className="workspace" aria-label="ToDo workspace">
         <header className="topbar">
           <div>
-            <p className="eyebrow">ToDo List</p>
-            <h1>Plan the next useful thing.</h1>
+            <p className="eyebrow">My Workspace</p>
+            <h1>What's on the agenda today?</h1>
           </div>
           <button className="icon-button" type="button" onClick={() => dispatch(fetchTasks())} aria-label="Refresh tasks">
             <RefreshCw size={18} />
@@ -147,7 +154,7 @@ export default function App() {
                     dispatch(clearFieldError("title"));
                   }
                 }}
-                placeholder="Prepare frontend contract"
+                placeholder="What needs to be done?"
                 maxLength={200}
                 aria-invalid={Boolean(titleError)}
                 aria-describedby={titleError ? "title-error" : undefined}
@@ -170,7 +177,7 @@ export default function App() {
                       dispatch(clearFieldError("description"));
                     }
                   }}
-                  placeholder="Add the details that make this easy to resume."
+                  placeholder="Add any helpful notes, links, or context here..."
                   maxLength={1000}
                   aria-invalid={Boolean(descriptionError)}
                   aria-describedby={descriptionError ? "description-error" : undefined}
@@ -189,10 +196,27 @@ export default function App() {
                 <CalendarDays size={18} />
                 <input
                   type="date"
+                  className={deadlineError ? "invalid" : ""}
                   value={form.deadline ?? ""}
-                  onChange={(event) => setForm((current) => ({ ...current, deadline: event.target.value }))}
+                  onChange={(event) => {
+                    setForm((current) => ({ ...current, deadline: event.target.value }));
+                    if (clientFieldErrors.deadline) {
+                      setClientFieldErrors((current) => {
+                        const newErrors = { ...current };
+                        delete newErrors.deadline;
+                        return newErrors;
+                      });
+                    }
+                  }}
+                  aria-invalid={Boolean(deadlineError)}
+                  aria-describedby={deadlineError ? "deadline-error" : undefined}
                 />
               </div>
+              {deadlineError ? (
+                <span className="field-error" id="deadline-error" style={{ marginTop: "4px" }}>
+                  {deadlineError}
+                </span>
+              ) : null}
             </label>
 
             <div className="form-actions">
@@ -281,7 +305,7 @@ function TaskRow({
                   />
               </div>
         {task.description ? <p>{task.description}</p> : null}
-        <span className="deadline">
+        <span className={`deadline ${isUrgentDeadline(task.deadline) && task.status !== "Done" ? "urgent" : ""}`}>
           <CalendarDays size={15} />
           {formatDeadline(task.deadline)}
         </span>
@@ -369,8 +393,8 @@ function EmptyState() {
   return (
     <div className="empty-state">
       <CheckCircle2 size={28} />
-      <h3>No tasks in this view</h3>
-      <p>Create one or switch the filter.</p>
+      <h3>All clear!</h3>
+      <p>You're fully caught up. Enjoy the break or add a new task.</p>
     </div>
   );
 }
@@ -384,13 +408,23 @@ function normalizeForm(details: TaskDetails): TaskDetails {
 }
 
 function validateForm(details: TaskDetails) {
-  if (!details.title.trim()) {
-    return {
-      title: "Add a title before creating the task."
-    };
-  }
+    const errors: Record<string, string> = {};
 
-  return {};
+    if (!details.title.trim()) {
+        errors.title = "Add a title before creating the task.";
+    }
+
+    if (details.deadline) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const deadlineDate = new Date(`${details.deadline}T00:00:00`);
+
+        if (deadlineDate < today) {
+            errors.deadline = "Deadline cannot be in the past.";
+        }
+    }
+
+    return errors;
 }
 
 function toDateInputValue(deadline?: string | null) {
@@ -411,4 +445,21 @@ function formatDeadline(deadline?: string | null) {
     day: "numeric",
     year: "numeric"
   }).format(new Date(deadline));
+}
+
+function isUrgentDeadline(deadline?: string | null) {
+  if (!deadline) {
+    return false;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const dlDate = new Date(deadline);
+  dlDate.setHours(0, 0, 0, 0);
+
+  const diffTime = dlDate.getTime() - today.getTime();
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+  return diffDays <= 3;
 }
